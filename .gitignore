@@ -11,3 +11,7 @@ out/
 .env
 
 .vscode
+
+# Website
+node_modules
+.next
