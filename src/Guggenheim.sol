@@ -32,6 +32,17 @@ contract Guggenheim {
     }
 
     /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+
+    event DutchAuctionSettled(
+        address indexed seller,
+        address indexed buyer,
+        uint256 indexed salePrice,
+        DutchAuctionConfig config
+    );
+
+    /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
 
@@ -62,6 +73,9 @@ contract Guggenheim {
         // Send currentPrice to seller
         (bool sent, bytes memory _data) = payable(seller).call{value: currentPrice}("");
         require(sent, "Failed to send Ether");
+
+        // Emit event for off-chain indexing purposes
+        emit DutchAuctionSettled(seller, msg.sender, currentPrice, config);
     }
 
     function send(address recipient, uint256 amount) external {
