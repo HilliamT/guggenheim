@@ -31,6 +31,16 @@ contract Guggenheim {
         bytes32 s;
     }
 
+    struct ServerSignedMessage {
+        // v, r, s from user signature
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+
+        // block number
+        uint256 blockNumber;
+    }
+
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -56,9 +66,17 @@ contract Guggenheim {
                                SETTLEMENT
     //////////////////////////////////////////////////////////////*/
 
-    function settleDutchAuction(DutchAuctionConfig calldata config, Signature calldata signature) external payable {
+    function settleDutchAuction(DutchAuctionConfig calldata config, Signature calldata userSignature, Signature calldata serverSignature) external payable {
+        address signer = ecrecover(keccak256(abi.encode(ServerSignedMessage({
+            v: userSignature.v,
+            r: userSignature.r,
+            s: userSignature.s,
+            blockNumber: block.number
+        }))), serverSignature.v, serverSignature.r, serverSignature.s);
+        require(signer == owner, "Signature is not signed by contract deployer");
+
         bytes32 messageHash = keccak256(abi.encode(config));
-        address seller = ecrecover(messageHash, signature.v, signature.r, signature.s);
+        address seller = ecrecover(messageHash, userSignature.v, userSignature.r, userSignature.s);
 
         // Check that the deadline is still valid
         require(block.number <= config.endBlock, "Dutch auction has expired");
